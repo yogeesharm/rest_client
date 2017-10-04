@@ -13,9 +13,9 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 import com.hcl.poc.rest.api.Client;
 import com.hcl.poc.rest.api.Response;
 
-public class RestControlerTest {
+public class RestControllerTest {
 	
-	private static Logger logger = LogManager.getLogger(RestControlerTest.class);
+	private static Logger logger = LogManager.getLogger(RestControllerTest.class);
 	public static String URL = "http://localhost:8080/RestPoc/rest/users/";
 	public static String ID = "1012";
 

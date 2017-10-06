@@ -11,7 +11,7 @@ To update the user, click on the edit link provided in the user details table. U
 edit the details and click on Update button.
 To delete the User, click on the delete link provided in the user details table. This will delete the user details.
 
-User guide User Guide.docx for the UI client is also attached.
+User guide(User Guide.docx) for the UI client is also attached.
 
 
  

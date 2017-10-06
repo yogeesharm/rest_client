@@ -1,0 +1,385 @@
+﻿<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>RESTful Web Services</title>
+<link href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" rel="stylesheet" />
+<link rel="stylesheet" href="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
+<script src="https://code.jquery.com/jquery-2.0.1.min.js"></script>
+<script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+</head>
+<body>
+	<div class="panel panel-primary col-sm-8 col-sm-offset-2">
+		<div class="panel-heading">User Details</div>
+		<div class="panel-body">
+			<input type="hidden" id="userId" value="0" /> 
+
+			<div class="row">
+				<div class="col-sm-12">
+					<table id="userTable" class="table table-bordered table-condensed table-striped">
+						<thead>
+							<tr>
+								<th>Edit</th>
+								<th>Delete</th>
+								<th>First Name</th>
+								<th>Last Name</th>
+								<th>Date of Birth</th>
+								<th>Sex</th>
+								<th>Email</th>
+								<th>Address</th>
+							</tr>
+						</thead>
+					</table>
+					<div id="noRecordDiv" class='col-sm-offset-2' style="color: red; font-weight: bold">No Records Found</div>
+				</div>
+			</div>
+		</div>
+		
+		<div class="row">
+			<div class="col-sm-8">
+				<button type="button" id="addButton" class="btn btn-primary"
+					onclick="addClick();">Add User</button>
+			</div>
+		</div>
+		
+		<div class="row">
+			<div class="col-sm-8">
+				<div class="panel panel-primary">
+					<div class="panel-heading">User Information</div>
+					<div class="panel-body">
+					<table class="col-sm-10">
+						<tr>
+							<td style="width: 35%;"><label for="firstName"> First Name </label> </td>
+							<td style="width: 65%;"><input type="text" class="form-control" id="firstName" /></td>
+						</tr>
+						<tr>
+							<td style="width: 35%;"><label for="lastName"> Last Name </label> </td>
+							<td style="width: 65%;"><input type="text" class="form-control" id="lastName" /></td>
+						</tr>
+						<tr>
+							<td style="width: 35%;"><label for="sex">Sex</label></td>
+							<td style="width: 65%;">
+								<div class="col-xs-9">
+								<label class="custom-control custom-radio"> <input
+									id="radio1" name="sex" type="radio" value="Male"
+									class="custom-control-input"> <span
+									class="custom-control-indicator"></span> <span
+									class="custom-control-description">Male</span>
+								</label> 
+								<label class="custom-control custom-radio"> <input
+									id="radio2" name="sex" type="radio" value="Female"
+									class="custom-control-input"> <span
+									class="custom-control-indicator"></span> <span
+									class="custom-control-description">Female</span>
+								</label>
+							</div>
+							</td>
+						</tr>
+						<tr>
+							<td style="width: 35%;"><label for="dob"> Date of Birth </label></td>
+							<td style="width: 65%;"><input type="date" class="form-control" id="dob" /></td>
+						</tr>
+						<tr
+>
+							<td style="width: 35%;"><label for="email"> E-mail </label></td>
+							<td style="width: 65%;"><input type="text" class="form-control" id="email" /></td>
+						</tr>
+						<tr>
+							<td style="width: 35%;"><label for="address"> Address </label></td>
+							<td style="width: 65%;"><input type="text" class="form-control" id="address" /></td>
+						</tr>
+					</table>
+						
+					</div>
+					<div class="panel-footer">
+						<div class="row">
+							<div class="col-xs-12">
+								<button type="button" id="updateButton" class="btn btn-primary"
+									onclick="updateClick();">Add</button>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<script>
+    $(document).ready(function () {
+    	$("#noRecordDiv").hide();
+      	userList();
+    });
+
+    $( function() {
+        $( "#dob" ).datepicker();
+        $( "#dob" ).datepicker( "option", "dateFormat", "yy-mm-dd" );
+      } );
+
+    var User = {
+ 		userId: 0,
+ 	    firstName: "",
+ 	    lastName: "",
+ 	    sex: "",
+ 	   	dateOfBirth: "",
+ 	    email: "",
+ 	    address: ""
+ 	}
+
+    // Get all users to display
+    function userList() {
+      // Call Web API to get a list of users
+      $.ajax({
+        url: 'http://localhost:8080/RestPoc/rest/users',
+        type: 'GET',
+        dataType: 'json',
+        success: function (users) {
+          userListSuccess(users);
+        },
+        error: function (request, message, error) {
+        	if(request.status != 404){
+		          handleException(request, message, error);
+        	} else {
+        		alert("The service is not running,  Please start the services");
+        		$("#noRecordDiv").show();
+        	}
+        }
+      });
+    }
+
+    function userGet(ctl) {
+        // Get user id from data- attribute
+        var id = $(ctl).data("id");
+
+        // Store user id in hidden field
+        $("#userId").val(id);
+
+        // Call Web API to get a User
+        $.ajax({
+          url: "http://localhost:8080/RestPoc/rest/users/" + id,
+          type: 'GET',
+          dataType: 'json',
+          success: function (user) {
+            userToFields(user);
+
+            // Change Update Button Text
+            $("#updateButton").text("Update");
+          },
+          error: function (request, message, error) {
+            handleException(request, message, error);
+          }
+        });
+      }
+
+    function userAdd(user) {
+        // Call Web API to add a new user
+        $.ajax({
+          url: "http://localhost:8080/RestPoc/rest/users",
+          type: 'POST',
+          contentType: "application/json;charset=utf-8",
+          data: JSON.stringify(user),
+          success: function (user) {
+            userAddSuccess(user);
+          },
+          error: function (request, message, error) {
+            handleException(request, message, error);
+          }
+        });
+      }
+
+    function userUpdate(user) {
+        var url = "http://localhost:8080/RestPoc/rest/users/" + user.userId;
+
+        // Call Web API to update user
+        $.ajax({
+          url: url,
+          type: 'PUT',
+          contentType: "application/json;charset=utf-8",
+          data: JSON.stringify(user),
+          success: function (user) {
+            userUpdateSuccess(user);
+          },
+          error: function (request, message, error) {
+            handleException(request, message, error);
+          }
+        });
+      }
+
+ // Delete user from <table>
+    function userDelete(ctl) {
+
+      if(confirm("Are you sure you want to delete?")){
+	      var id = $(ctl).data("id");
+	
+	      // Call Web API to delete a user
+	      $.ajax({
+	        url: "http://localhost:8080/RestPoc/rest/users/" + id,
+	        type: "DELETE",
+	        contentType: "application/json;charset=utf-8",
+	        dataType: "json",
+	        success: function () {
+	          $(ctl).parents("tr").remove();
+	        },
+	        error: function (request, message, error) {
+	            if(request.status === 200){
+					alert(request.responseText);
+					$(ctl).parents("tr").remove();
+	            } else {
+					handleException(request, message, error);
+	            }
+	        }
+	      });
+      }
+    }
+    
+    function userToFields(user) {
+        $("#firstName").val(user.firstName);
+        $("#lastName").val(user.lastName);
+        $("#dob").val(user.dateOfBirth);
+        $("#email").val(user.email);
+        $("#address").val(user.address);
+        if(user.sex === 'Male'){
+        	$("#radio1").prop('checked', true);
+        	$("#radio2").prop('checked', false);
+        } 
+        if(user.sex === 'Female') {
+        	$("#radio1").prop('checked', false);
+        	$("#radio2").prop('checked', true);
+        }
+      }
+
+    // Display all users returned from Web API call
+    function userListSuccess(users) {
+    	
+    	if(users.length === 0){
+    		$("#noRecordDiv").show();
+    	}
+      // Iterate over the collection of data
+      $.each(users, function (index, user) {
+        // Add a row to the user table
+        userAddRow(user);
+      });
+    }
+
+    // Add user row to <table>
+    function userAddRow(user) {
+      // First check if a <tbody> tag exists, add one if not
+      if ($("#userTable tbody").length == 0) {
+        $("#userTable").append("<tbody></tbody>");
+      }
+
+      // Append row to <table>
+      $("#userTable tbody").append(
+        userBuildTableRow(user));
+    }
+
+    // Build a <tr> for a row of table data
+    function userBuildTableRow(user) {
+    	var date = user.dateOfBirth;
+    	var formatted = $.datepicker.formatDate("yy-mm-dd", new Date(date));
+
+
+      var ret = "<tr>" +
+		      "<td>" +
+		      "<button type='button' " +
+		          "onclick='userGet(this);' " +
+		          "class='btn btn-default' " +
+		          "data-id='" + user.userId + "'>" +
+		          "<span class='glyphicon glyphicon-edit' />" +
+		      "</button>" +
+		    "</td>" +
+		    "<td>" +
+            "<button type='button' " +
+                    "onclick='userDelete(this);' " +
+                    "class='btn btn-default' " +
+                    "data-id='" + user.userId + "'>" +
+                    "<span class='glyphicon glyphicon-remove' />" +
+            "</button>" +
+          	"</td>" +
+            "<td>" + user.firstName+ "</td>" +
+            "<td>" + user.lastName+ "</td>" +
+            "<td>" + formatted + "</td>" +
+            "<td>" + user.sex + "</td>" +
+            "<td>" + user.email + "</td>" +
+            "<td>" + user.address + "</td>" +
+          "</tr>";
+
+      return ret;
+    }
+
+ // Update user in <table>
+    function userUpdateInTable(user) {
+      // Find user in <table>
+      var row = $("#userTable button[data-id='" + user.userId + "']")
+                .parents("tr")[0];
+      // Add changed user to table
+      $(row).after(userBuildTableRow(user));
+      // Remove original user
+      $(row).remove();
+
+      // Clear form fields
+      formClear();
+
+      // Change Update Button Text
+      $("#updateButton").text("Add");
+    }
+
+    // Handle click event on Update button
+    function updateClick() {
+    	// Build user object from inputs
+        User = new Object();
+        User.userId = $("#userId").val();
+        User.firstName = $("#firstName").val();
+        User.lastName = $("#lastName").val();
+        User.sex = $("input[name=sex]:checked").val();
+        User.dateOfBirth = $("#dob").val();
+        User.email = $("#email").val();
+        User.address = $("#address").val();
+
+        if ($("#updateButton").text().trim() == "Add") {
+          userAdd(User);
+        }
+        else {
+          userUpdate(User);
+        }
+    }
+
+    // Handle click event on Add button
+    function addClick() {
+    	formClear();
+    }
+
+    function userAddSuccess(user) {
+        userAddRow(user);
+        formClear();
+        $("#noRecordDiv").hide();
+      }
+
+    function userUpdateSuccess(user) {
+        userUpdateInTable(user);
+      }
+
+ 	// Clear form fields
+    function formClear() {
+      $("#firstName").val("");
+      $("#lastName").val("");
+      $("input[name=sex]").attr("checked", false);
+      $("#dob").val("");
+      $("#email").val("");
+      $("#address").val("");
+    }
+    
+    // Handle exceptions from AJAX calls
+    function handleException(request, message, error) {
+      var msg = "";
+
+      msg += "Code: " + request.status + "\n";
+      msg += "Text: " + request.statusText + "\n";
+      if (request.responseJSON != null) {
+        msg += "Message" + request.responseJSON.Message + "\n";
+      }
+
+      alert(msg);
+    }
+  </script>
+</body>
+</html>
